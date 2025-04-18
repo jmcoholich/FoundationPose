@@ -156,7 +156,7 @@ class FoundationPose:
     return center.reshape(3)
 
 
-  def register(self, K, rgb, depth, ob_mask, ob_id=None, glctx=None, iteration=5):
+  def register(self, K, rgb, depth, ob_mask, ob_id=None, glctx=None, iteration=5, init_rot_guess=None):
     '''Copmute pose from given pts to self.pcd
     @pts: (N,3) np array, downsampled scene points
     '''
@@ -201,6 +201,9 @@ class FoundationPose:
     self.ob_mask = ob_mask
 
     poses = self.generate_random_pose_hypo(K=K, rgb=rgb, depth=depth, mask=ob_mask, scene_pts=None)
+    if init_rot_guess is not None:
+      # poses[:, :3, :3] = torch.eye(3, device='cuda')
+      poses[:, :3, :3] = torch.tensor(init_rot_guess, device='cuda', dtype=torch.float).reshape(1,3,3)
     poses = poses.data.cpu().numpy()
     logging.info(f'poses:{poses.shape}')
     center = self.guess_translation(depth=depth, mask=ob_mask, K=K)

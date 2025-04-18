@@ -13,8 +13,11 @@ PROMPTS=("blue cube" "red cube" "green cube")  # just to get mask dirs
 #   parser.add_argument('--debug_dir', type=str, default=f'{code_dir}/debug')
 
 for subdir in "$INPUT_DIR"/*; do
-    # ensure it actually exists and is a directory
-    [ -d "$subdir" ] || continue
+    # ensure it actually exists and is a directory. If it doesn't print a message
+    if [ ! -d "$subdir" ]; then
+        echo "Skipping $subdir, not a directory"
+        continue
+    fi
 
     subdir_name=$(basename "$subdir")
     echo "Running FoundationPose on $subdir_name"
@@ -31,6 +34,7 @@ for subdir in "$INPUT_DIR"/*; do
             --track_refine_iter 2 \
             --debug 2 \
             --debug_dir "$INPUT_DIR/$subdir_name/outputs_$PROMPT" \
-            --mask_dir "masks_$PROMPT"
+            --mask_dir "masks_$PROMPT" \
+            --map_to_table_frame
     done
 done
