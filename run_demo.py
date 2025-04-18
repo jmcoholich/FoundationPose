@@ -21,8 +21,12 @@ if __name__=='__main__':
   parser.add_argument('--track_refine_iter', type=int, default=2)
   parser.add_argument('--debug', type=int, default=1)
   parser.add_argument('--debug_dir', type=str, default=f'{code_dir}/debug')
+  parser.add_argument('--mask_dir', type=str, default=f'{code_dir}/demo_data/mustard0/masks')
+
   args = parser.parse_args()
 
+  args.mask_dir = args.mask_dir.replace(' ', '_')
+  args.debug_dir = args.debug_dir.replace(' ', '_')
   set_logging_format()
   set_seed(0)
 
@@ -48,7 +52,7 @@ if __name__=='__main__':
     color = reader.get_color(i)
     depth = reader.get_depth(i)
     if i==0:
-      mask = reader.get_mask(0).astype(bool)
+      mask = reader.get_mask(0, dirname=args.mask_dir).astype(bool)
       pose = est.register(K=reader.K, rgb=color, depth=depth, ob_mask=mask, iteration=args.est_refine_iter)
 
       if debug>=3:

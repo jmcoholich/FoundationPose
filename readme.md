@@ -1,3 +1,27 @@
+# RoCoDA v2 Notes
+
+This repo requires the conda env and run_lang_sam.py script from https://github.com/jmcoholich/demo_translate
+Right now it only works for the stack three cubes task.
+To convert a folder with a bunch of demos into the format needed for FoundationPose, run
+
+```bash
+bash convert_demo_dataset.bash
+```
+
+The FoundationPose tracking requires the mask for the first frame only. Its worth checking that this is correct, as sometimes langSAM messes up and highlights a different block. Not sure why.
+
+To run FoundationPose on all of these, enter the docker container (installation below) and run
+
+```bash
+bash run_on_demo_dataset.bash
+```
+
+(I tried installing langSAM in the docker containiner so everything can be run together, FoundationPose and LangSAM have too many conflicting dependencies so I gave up.)
+
+TODO:
+- map pose estimates to robot frame with April tag
+- Add object pose estimates to pkl or hdf5 files (for Neural assets training)
+
 # FoundationPose: Unified 6D Pose Estimation and Tracking of Novel Objects
 [[Paper]](https://arxiv.org/abs/2312.08344) [[Website]](https://nvlabs.github.io/FoundationPose/)
 
