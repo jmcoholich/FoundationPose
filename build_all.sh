@@ -5,3 +5,6 @@ cd /kaolin && rm -rf build *egg* && pip install -e .
 cd $DIR/bundlesdf/mycuda && rm -rf build *egg* && pip install -e .
 
 cd ${DIR}
+
+yes | conda install ffmpeg
+pip install pupil_apriltags

@@ -29,6 +29,7 @@ def main():
     parser.add_argument('--prompts', type=str, nargs='+')
     parser.add_argument('--init_rot_guess', type=ast.literal_eval, default='[[1, 0, 0], [0, 1, 0], [0, 0, 1]]')
     parser.add_argument('--map_to_table_frame', action='store_true', help='whether to map the object pose to the table frame')
+    parser.add_argument('--headless', action='store_true', help='do not show the visualization, good for running on a server')
 
     args = parser.parse_args()
     # breakpoint()
@@ -106,8 +107,9 @@ def main():
                 vis = draw_xyz_axis(vis, ob_in_cam=center_pose, scale=0.05, K=reader.K, thickness=2, transparency=0, is_input_rgb=True)
                 if args.map_to_table_frame:
                     vis = vis_tag(vis, [detections["cam_tag"]["detection"]])
-            cv2.imshow('1', vis[...,::-1])
-            cv2.waitKey(1)
+            if not args.headless:
+                cv2.imshow('1', vis[...,::-1])
+                cv2.waitKey(1)
 
 
         if debug>=2:
