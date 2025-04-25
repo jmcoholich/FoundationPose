@@ -37,14 +37,10 @@ for subdir in "$DEMO_DATASET_DIR"/demonstration*; do
     --output_dir "$this_out" \
     --mesh_file "$DEMO_DATASET_DIR/$MESH_FILE" \
     --input_dir "$subdir"
-  for PROMPT in "${PROMPTS[@]}"; do
-    echo "Running lang-sam on $subdir_name for camera $CAM_NUMBER with prompt: $PROMPT"
-      # run lang-sam to get masks for first images
-      python $USER_HOME/demo_translate/run_lang_sam.py \
-      --input_dir "$this_out/rgb" \
-      --output_dir "$this_out/masks_$PROMPT"  \
-      --prompt "$PROMPT"
-  done
+  # run lang-sam to get masks for first images
+  python $USER_HOME/demo_translate/run_lang_sam.py \
+  --input_dir "$this_out/rgb" \
+  --prompts "${PROMPTS[@]}"
 done
 
 
