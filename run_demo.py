@@ -62,6 +62,9 @@ def main():
             print("ASDF")
             if args.map_to_table_frame:
                 detections = get_april_tag(color, reader)
+                cam2tag = np.eye(4)
+                cam2tag[:3, :3] = detections["cam_tag"]["detection"].pose_R
+                cam2tag[:3, 3] = detections["cam_tag"]["detection"].pose_t.reshape(3)
 
             if debug>=3:
                 m = mesh.copy()
@@ -76,7 +79,12 @@ def main():
 
         os.makedirs(f'{debug_dir}/ob_in_cam', exist_ok=True)
         np.savetxt(f'{debug_dir}/ob_in_cam/{reader.id_strs[i]}.txt', pose.reshape(4,4))
-
+        if args.map_to_table_frame:
+            cam2block = pose.reshape(4,4)
+            robot2block = ROBO2TAG @ np.linalg.inv(cam2tag) @ cam2block
+            np.savetxt(f'{debug_dir}/ob_in_cam/{reader.id_strs[i]}_robot2block.txt', robot2block.reshape(4,4))
+            translation = robot2block[:3, 3]
+            print(f"translation: {translation}")
 
         if debug>=1:
             center_pose = pose@np.linalg.inv(to_origin)
@@ -196,6 +204,37 @@ def vis_tag(img: np.ndarray, results):
         print()
     return img
 
+def get_robot2tag_mat():
+        # The following transformations are to get to the tag frame from the robot frame
+    # this is the robot mat without the 14 degree tilt or whatever
+    robo_mat = np.array([[0, 0, 1, -0.30895138],
+                            [0, -1, 0, 0],
+                            [1, 0, 0, 0.82001764],
+                            [0, 0, 0, 1]])
+
+    # rotate 180 about world z-axis
+    robo_mat[:3, :3] = np.array([[-1, 0, 0],
+                                [0, -1, 0],
+                                [0, 0, 1]]) @ robo_mat[:3, :3]
+
+    tag_size = 0.099
+    # Move to surface of robot base. aligned with front tip. 3 cm off the ground. 2.3 cm from the side
+    robo_mat[:3, 3] += np.array([
+        0.225 / 2.0 + 0.005,  # add width of clipboard and screws offset
+        .508 / 2.0 -0.006 - tag_size / 5 + tag_size / 2.0,
+        -0.14 / 2.0 + (tag_size * 9/5 / 2) + 0.043 - tag_size / 5,
+        ])
+    robo_mat[:3, :3] = robo_mat[:3, :3] @ np.array([[0, -1, 0],
+                                                    [1, 0, 0],
+                                                    [0, 0, 1]])
+
+    # rotate 180 about world z-axis
+    robo_mat[:3, :3] = np.array([[-1, 0, 0],
+                                [0, -1, 0],
+                                [0, 0, 1]]) @ robo_mat[:3, :3]
+    return robo_mat
+
+ROBO2TAG = get_robot2tag_mat()
 
 if __name__ == "__main__":
     main()
