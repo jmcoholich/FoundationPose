@@ -13,6 +13,7 @@ import argparse
 import ast
 from pupil_apriltags import Detector
 from scipy.spatial.transform import Rotation as R
+import os
 
 
 def main():
@@ -33,7 +34,7 @@ def main():
     # breakpoint()
     # args.mask_dir = args.mask_dir.replace(' ', '_')
     # args.debug_dir = args.debug_dir.replace(' ', '_')
-    output_dirs = ["outputs_" + prompt for prompt in args.prompts]
+    output_dirs = [os.path.join(args.test_scene_dir, "outputs_" + prompt) for prompt in args.prompts]
     for output_dir in output_dirs:
         os.makedirs(output_dir, exist_ok=True)
     set_logging_format()
@@ -84,22 +85,25 @@ def main():
             poses = []
             for est in ests:
                 poses.append(est.track_one(rgb=color, depth=depth, K=reader.K, iteration=args.track_refine_iter))
+        transforms = {}
         for j in range(len(ests)):
-            os.makedirs(f'{output_dirs[j]}/ob_in_cam', exist_ok=True)
+            os.makedirs(f'{output_dirs[j]}', exist_ok=True)
             cam2block = poses[j].reshape(4,4)
-            np.savetxt(f'{output_dirs[j]}/ob_in_cam/{reader.id_strs[i]}.txt', cam2block)
+            np.savetxt(f'{output_dirs[j]}/{reader.id_strs[i]}.txt', cam2block)
             if args.map_to_table_frame:
                 robot2block = ROBO2TAG @ np.linalg.inv(cam2tag) @ cam2block
-                np.savetxt(f'{output_dirs[j]}/ob_in_cam/{reader.id_strs[i]}_robot2block.txt', robot2block.reshape(4,4))
-                translation = robot2block[:3, 3]
-                print(f"translation: {translation}")
+                np.savetxt(f'{output_dirs[j]}/{reader.id_strs[i]}_robot2block.txt', robot2block.reshape(4,4))
+                transforms[args.prompts[j]] = robot2block
+                # print(f"translation: {translation}")
 
         if debug>=1:
             vis = color.copy()
+            if args.map_to_table_frame:
+                add_translation_text(vis, transforms, [(0, 50), (0, 100), (0, 150)])
             for j in range(len(ests)):
                 center_pose = poses[j]@np.linalg.inv(to_origin)
                 vis = draw_posed_3d_box(reader.K, img=vis, ob_in_cam=center_pose, bbox=bbox)
-                vis = draw_xyz_axis(vis, ob_in_cam=center_pose, scale=0.1, K=reader.K, thickness=3, transparency=0, is_input_rgb=True)
+                vis = draw_xyz_axis(vis, ob_in_cam=center_pose, scale=0.05, K=reader.K, thickness=2, transparency=0, is_input_rgb=True)
                 if args.map_to_table_frame:
                     vis = vis_tag(vis, [detections["cam_tag"]["detection"]])
             cv2.imshow('1', vis[...,::-1])
@@ -107,8 +111,21 @@ def main():
 
 
         if debug>=2:
-            os.makedirs(f'vis_all/track_vis', exist_ok=True)
-            imageio.imwrite(f'vis_all/track_vis/{reader.id_strs[i]}.png', vis)
+            os.makedirs(f'{args.test_scene_dir}/track_vis', exist_ok=True)
+            imageio.imwrite(f'{args.test_scene_dir}/track_vis/{reader.id_strs[i]}.png', vis)
+
+
+def add_translation_text(vis, translations, locations):
+    # write the key, value of the translations on the image at the location
+    for i, (key, value) in enumerate(translations.items()):
+        # translations
+        value_str = f"{key + ' translation'}: {value[0, 3]:.2f}, {value[1, 3]:.2f}, {value[2, 3]:.2f}"
+        cv2.putText(vis, value_str, locations[i], cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
+        # rotations, convert to zyx euler angles
+        euler = R.from_matrix(value[:3, :3]).as_euler('zyx', degrees=True)
+        value_str = f"{key + ' ZYX Euler'}: {euler[0]:.1f}, {euler[1]:.1f}, {euler[2]:.1f}"
+        locations[i] = (locations[i][0], locations[i][1] + 20)
+        cv2.putText(vis, value_str, locations[i], cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
 
 def get_april_tag(img, reader):

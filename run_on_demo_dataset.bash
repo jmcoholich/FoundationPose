@@ -1,6 +1,7 @@
 #!/bin/bash
 set -ex
 
+yes | conda install ffmpeg
 INPUT_DIR="for_FoundationPose"
 PROMPTS=("blue_cube" "red_cube" "green_cube")  # just to get mask dirs
 
@@ -37,4 +38,5 @@ for subdir in "$INPUT_DIR"/*; do
         --map_to_table_frame
         # --debug_dir "$INPUT_DIR/$subdir_name/outputs_$PROMPT" \
     # done
+    yes | ffmpeg -framerate 15 -i $INPUT_DIR/$subdir_name/track_vis/%04d.png -c:v mpeg4 -q:v 1 -pix_fmt yuv420p $INPUT_DIR/$subdir_name/vis.mp4
 done
