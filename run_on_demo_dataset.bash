@@ -2,7 +2,7 @@
 set -ex
 
 INPUT_DIR="for_FoundationPose"
-PROMPTS=("blue cube" "red cube" "green cube")  # just to get mask dirs
+PROMPTS=("blue_cube" "red_cube" "green_cube")  # just to get mask dirs
 
 # run script for every subdir in the input directory
 #   parser.add_argument('--mesh_file', type=str, default=f'{code_dir}/demo_data/mustard0/mesh/textured_simple.obj')
@@ -26,15 +26,15 @@ for subdir in "$INPUT_DIR"/*; do
     mesh_file=$(find "$INPUT_DIR/$subdir_name/mesh" -type f -name "*.obj" | head -n 1)
     # dirs are messed up, debug
     # run FoundationPose
-    for PROMPT in "${PROMPTS[@]}"; do
-        python run_demo.py \
-            --mesh_file "$mesh_file" \
-            --test_scene_dir "$INPUT_DIR/$subdir_name" \
-            --est_refine_iter 5 \
-            --track_refine_iter 2 \
-            --debug 2 \
-            --debug_dir "$INPUT_DIR/$subdir_name/outputs_$PROMPT" \
-            --mask_dir "masks_$PROMPT" \
-            --map_to_table_frame
-    done
+    # for PROMPT in "${PROMPTS[@]}"; do
+    python run_demo.py \
+        --mesh_file "$mesh_file" \
+        --test_scene_dir "$INPUT_DIR/$subdir_name" \
+        --est_refine_iter 5 \
+        --track_refine_iter 2 \
+        --debug 2 \
+        --prompts "${PROMPTS[@]}" \
+        --map_to_table_frame
+        # --debug_dir "$INPUT_DIR/$subdir_name/outputs_$PROMPT" \
+    # done
 done

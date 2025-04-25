@@ -23,23 +23,27 @@ def main():
     parser.add_argument('--est_refine_iter', type=int, default=5)
     parser.add_argument('--track_refine_iter', type=int, default=2)
     parser.add_argument('--debug', type=int, default=1)
-    parser.add_argument('--debug_dir', type=str, default=f'{code_dir}/debug')
-    parser.add_argument('--mask_dir', type=str, default=f'{code_dir}/demo_data/mustard0/masks')
+    # parser.add_argument('--debug_dir', type=str, default=f'{code_dir}/debug')
+    # parser.add_argument('--mask_dir', type=str, default=f'{code_dir}/demo_data/mustard0/masks')
+    parser.add_argument('--prompts', type=str, nargs='+')
     parser.add_argument('--init_rot_guess', type=ast.literal_eval, default='[[1, 0, 0], [0, 1, 0], [0, 0, 1]]')
     parser.add_argument('--map_to_table_frame', action='store_true', help='whether to map the object pose to the table frame')
 
     args = parser.parse_args()
-
-    args.mask_dir = args.mask_dir.replace(' ', '_')
-    args.debug_dir = args.debug_dir.replace(' ', '_')
+    # breakpoint()
+    # args.mask_dir = args.mask_dir.replace(' ', '_')
+    # args.debug_dir = args.debug_dir.replace(' ', '_')
+    output_dirs = ["outputs_" + prompt for prompt in args.prompts]
+    for output_dir in output_dirs:
+        os.makedirs(output_dir, exist_ok=True)
     set_logging_format()
     set_seed(0)
 
     mesh = trimesh.load(args.mesh_file)
 
     debug = args.debug
-    debug_dir = args.debug_dir
-    os.system(f'rm -rf {debug_dir}/* && mkdir -p {debug_dir}/track_vis {debug_dir}/ob_in_cam')
+    # debug_dir = args.debug_dir
+    # os.system(f'rm -rf {debug_dir}/* && mkdir -p {debug_dir}/track_vis {debug_dir}/ob_in_cam')
 
     to_origin, extents = trimesh.bounds.oriented_bounds(mesh)
     bbox = np.stack([-extents/2, extents/2], axis=0).reshape(2,3)
@@ -47,7 +51,7 @@ def main():
     scorer = ScorePredictor()
     refiner = PoseRefinePredictor()
     glctx = dr.RasterizeCudaContext()
-    est = FoundationPose(model_pts=mesh.vertices, model_normals=mesh.vertex_normals, mesh=mesh, scorer=scorer, refiner=refiner, debug_dir=debug_dir, debug=debug, glctx=glctx)
+    ests = [FoundationPose(model_pts=mesh.vertices, model_normals=mesh.vertex_normals, mesh=mesh, scorer=scorer, refiner=refiner,  debug=debug, glctx=glctx) for _ in range(len(args.prompts))]
     logging.info("estimator initialization done")
 
     reader = YcbineoatReader(video_dir=args.test_scene_dir, shorter_side=None, zfar=np.inf)
@@ -57,9 +61,10 @@ def main():
         color = reader.get_color(i)
         depth = reader.get_depth(i)
         if i==0:
-            mask = reader.get_mask(0, dirname=args.mask_dir).astype(bool)
-            pose = est.register(K=reader.K, rgb=color, depth=depth, ob_mask=mask, iteration=args.est_refine_iter, init_rot_guess=args.init_rot_guess)
-            print("ASDF")
+            poses = []
+            for j in range(len(ests)):
+                mask = reader.get_mask(0, dirname="masks_" + args.prompts[j]).astype(bool)
+                poses.append(ests[j].register(K=reader.K, rgb=color, depth=depth, ob_mask=mask, iteration=args.est_refine_iter, init_rot_guess=args.init_rot_guess))
             if args.map_to_table_frame:
                 detections = get_april_tag(color, reader)
                 cam2tag = np.eye(4)
@@ -67,6 +72,7 @@ def main():
                 cam2tag[:3, 3] = detections["cam_tag"]["detection"].pose_t.reshape(3)
 
             if debug>=3:
+                raise NotImplementedError("debug>=3 not implemented with multiple objects")
                 m = mesh.copy()
                 m.apply_transform(pose)
                 m.export(f'{debug_dir}/model_tf.obj')
@@ -75,30 +81,34 @@ def main():
                 pcd = toOpen3dCloud(xyz_map[valid], color[valid])
                 o3d.io.write_point_cloud(f'{debug_dir}/scene_complete.ply', pcd)
         else:
-            pose = est.track_one(rgb=color, depth=depth, K=reader.K, iteration=args.track_refine_iter)
-
-        os.makedirs(f'{debug_dir}/ob_in_cam', exist_ok=True)
-        np.savetxt(f'{debug_dir}/ob_in_cam/{reader.id_strs[i]}.txt', pose.reshape(4,4))
-        if args.map_to_table_frame:
-            cam2block = pose.reshape(4,4)
-            robot2block = ROBO2TAG @ np.linalg.inv(cam2tag) @ cam2block
-            np.savetxt(f'{debug_dir}/ob_in_cam/{reader.id_strs[i]}_robot2block.txt', robot2block.reshape(4,4))
-            translation = robot2block[:3, 3]
-            print(f"translation: {translation}")
+            poses = []
+            for est in ests:
+                poses.append(est.track_one(rgb=color, depth=depth, K=reader.K, iteration=args.track_refine_iter))
+        for j in range(len(ests)):
+            os.makedirs(f'{output_dirs[j]}/ob_in_cam', exist_ok=True)
+            cam2block = poses[j].reshape(4,4)
+            np.savetxt(f'{output_dirs[j]}/ob_in_cam/{reader.id_strs[i]}.txt', cam2block)
+            if args.map_to_table_frame:
+                robot2block = ROBO2TAG @ np.linalg.inv(cam2tag) @ cam2block
+                np.savetxt(f'{output_dirs[j]}/ob_in_cam/{reader.id_strs[i]}_robot2block.txt', robot2block.reshape(4,4))
+                translation = robot2block[:3, 3]
+                print(f"translation: {translation}")
 
         if debug>=1:
-            center_pose = pose@np.linalg.inv(to_origin)
-            vis = draw_posed_3d_box(reader.K, img=color, ob_in_cam=center_pose, bbox=bbox)
-            vis = draw_xyz_axis(color, ob_in_cam=center_pose, scale=0.1, K=reader.K, thickness=3, transparency=0, is_input_rgb=True)
-            if args.map_to_table_frame:
-                vis = vis_tag(vis, [detections["cam_tag"]["detection"]])
+            vis = color.copy()
+            for j in range(len(ests)):
+                center_pose = poses[j]@np.linalg.inv(to_origin)
+                vis = draw_posed_3d_box(reader.K, img=vis, ob_in_cam=center_pose, bbox=bbox)
+                vis = draw_xyz_axis(vis, ob_in_cam=center_pose, scale=0.1, K=reader.K, thickness=3, transparency=0, is_input_rgb=True)
+                if args.map_to_table_frame:
+                    vis = vis_tag(vis, [detections["cam_tag"]["detection"]])
             cv2.imshow('1', vis[...,::-1])
             cv2.waitKey(1)
 
 
         if debug>=2:
-            os.makedirs(f'{debug_dir}/track_vis', exist_ok=True)
-            imageio.imwrite(f'{debug_dir}/track_vis/{reader.id_strs[i]}.png', vis)
+            os.makedirs(f'vis_all/track_vis', exist_ok=True)
+            imageio.imwrite(f'vis_all/track_vis/{reader.id_strs[i]}.png', vis)
 
 
 def get_april_tag(img, reader):

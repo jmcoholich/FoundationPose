@@ -19,8 +19,9 @@ bash run_on_demo_dataset.bash
 (I tried installing langSAM in the docker containiner so everything can be run together, FoundationPose and LangSAM have too many conflicting dependencies so I gave up.)
 
 TODO:
-- map pose estimates to robot frame with April tag
+- <strike>map pose estimates to robot frame with April tag </strike>
 - Add object pose estimates to pkl or hdf5 files (for Neural assets training)
+- <strike>Can I track all the objects at once? Instead of having to run this whole pipeline for every new object </strike>
 
 # FoundationPose: Unified 6D Pose Estimation and Tracking of Novel Objects
 [[Paper]](https://arxiv.org/abs/2312.08344) [[Website]](https://nvlabs.github.io/FoundationPose/)
