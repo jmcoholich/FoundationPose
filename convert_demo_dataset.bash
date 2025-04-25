@@ -2,7 +2,7 @@
 
 # make sure the conda env is "demo_translate"
 set -ex
-DEMO_DATASET_DIR="/data3/TEST_demo_dataset"
+DEMO_DATASET_DIR="/data3/stack_three_blocks_all"
 PROMPTS=("blue cube" "red cube" "green cube")  # for lang-sam segmentations. Assumes same CAD model for all
 MESH_FILE="cube.obj"           # relative to DEMO_DATASET_DIR
 OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose"
