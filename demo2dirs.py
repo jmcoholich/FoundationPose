@@ -51,12 +51,12 @@ def main():
     # extract frames
     for i in tqdm(range(n_frames), desc="Extracting frames"):
         # depth: crop to 720×720 region
-        depth_frame = demo['depth_frames'][i, args.cam_num, :, 280:1000]
+        depth_frame = demo['depth_frames'][i, args.cam_num, :, :]
         Image.fromarray(depth_frame).save(
             os.path.join(depth_dir, f"{i:04d}.png"))
 
         # rgb: crop + BGR→RGB
-        rgb_frame = demo['rgb_frames'][i, args.cam_num, :, 280:1000, ::-1]
+        rgb_frame = demo['rgb_frames'][i, args.cam_num, :, :, ::-1]
         Image.fromarray(rgb_frame).save(
             os.path.join(rgb_dir, f"{i:04d}.png"))
 
