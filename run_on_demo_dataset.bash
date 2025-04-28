@@ -36,6 +36,7 @@ for subdir in "$INPUT_DIR"/*; do
         --map_to_table_frame \
         $HEADLESS_ARG
 
-    yes | ffmpeg -framerate 15 -i "$INPUT_DIR/$subdir_name/track_vis/%04d.png" \
-         -c:v mpeg4 -q:v 1 -pix_fmt yuv420p "$INPUT_DIR/$subdir_name/vis.mp4"
+    yes | ffmpeg -framerate 20 -i "$INPUT_DIR/$subdir_name/track_vis/%04d.png" \
+         -c:v mpeg4 -q:v 1 -pix_fmt yuv420p "$INPUT_DIR/$subdir_name/${subdir_name}_vis.mp4"
+
 done

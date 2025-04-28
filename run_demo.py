@@ -110,7 +110,7 @@ def main():
         if debug>=1:
             vis = color.copy()
             if args.map_to_table_frame:
-                add_translation_text(vis, transforms, [(0, 50), (0, 100), (0, 150)])
+                add_translation_text(vis, transforms, [(0, 50), (0, 100), (0, 150)], i)
             for j in range(len(ests)):
                 center_pose = poses[j]@np.linalg.inv(to_origin)
                 vis = draw_posed_3d_box(reader.K, img=vis, ob_in_cam=center_pose, bbox=bbox)
@@ -127,7 +127,7 @@ def main():
             imageio.imwrite(f'{args.test_scene_dir}/track_vis/{reader.id_strs[i]}.png', vis)
 
 
-def add_translation_text(vis, translations, locations):
+def add_translation_text(vis, translations, locations, frame_index):
     # write the key, value of the translations on the image at the location
     for i, (key, value) in enumerate(translations.items()):
         # translations
@@ -138,7 +138,9 @@ def add_translation_text(vis, translations, locations):
         value_str = f"{key + ' ZYX Euler'}: {euler[0]:.1f}, {euler[1]:.1f}, {euler[2]:.1f}"
         locations[i] = (locations[i][0], locations[i][1] + 20)
         cv2.putText(vis, value_str, locations[i], cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
-
+    # add the frame index to the bottom right corner (4 digits filled in with zeros)
+    frame_index_str = f"Frame: {frame_index:04d}"
+    cv2.putText(vis, frame_index_str, (vis.shape[1] - 150, vis.shape[0] - 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 1)
 
 def get_april_tag(img, reader):
     # convert to grayscale
