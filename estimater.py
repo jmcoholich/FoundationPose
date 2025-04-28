@@ -202,7 +202,11 @@ class FoundationPose:
     self.ob_mask = ob_mask
 
     poses = self.generate_random_pose_hypo(K=K, rgb=rgb, depth=depth, mask=ob_mask, scene_pts=None)
-    if init_rot_guess is not None:
+    # if self.pose_last is not None:
+    if False:
+      poses[:, :3, :3] = self.pose_last[:3,:3].reshape(1,3,3)
+      poses = poses[0:2]  # all of the pose vectors are identical
+    elif init_rot_guess is not None:
       # poses[:, :3, :3] = torch.eye(3, device='cuda')
       poses[:, :3, :3] = torch.tensor(init_rot_guess, device='cuda', dtype=torch.float).reshape(1,3,3)
       # # TODO integrate this more correctly
