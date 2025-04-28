@@ -122,6 +122,7 @@ class FoundationPose:
     rot_grid = np.asarray(rot_grid)
     logging.info(f"after cluster, rot_grid:{rot_grid.shape}")
     self.rot_grid = torch.as_tensor(rot_grid, device='cuda', dtype=torch.float)
+    # self.rot_grid = torch.tensor(sample_views_near_identity(200, max_angle_degrees=15), device='cuda', dtype=torch.float)
     logging.info(f"self.rot_grid: {self.rot_grid.shape}")
 
 
@@ -211,6 +212,10 @@ class FoundationPose:
       poses[:, :3, :3] = torch.tensor(init_rot_guess, device='cuda', dtype=torch.float).reshape(1,3,3)
       # # TODO integrate this more correctly
       poses = poses[0:2]  # all of the pose vectors are identical
+    else:
+      # only keep every other pose guess to save memory
+      poses = poses[::2]
+
     poses = poses.data.cpu().numpy()
     logging.info(f'poses:{poses.shape}')
     center = self.guess_translation(depth=depth, mask=ob_mask, K=K)

@@ -57,6 +57,8 @@ except:
   wp = None
 enable_timer = 0
 
+from scipy.spatial.transform import Rotation as R
+
 def NestDict():
   return defaultdict(NestDict)
 
@@ -504,6 +506,34 @@ def sample_views_icosphere(n_views, subdivisions=None, radius=1):
   cam_in_obs[:,:3,0] = x_axis
   cam_in_obs[:,:3,1] = y_axis
   cam_in_obs[:,:3,2] = z_axis
+  return cam_in_obs
+
+
+def sample_views_near_identity(n_views, max_angle_degrees=20):
+  """
+  Sample random camera poses near the identity rotation.
+  max_angle_degrees: maximum rotation deviation from identity (in degrees)
+  """
+  max_angle_radians = np.deg2rad(max_angle_degrees)
+  cam_in_obs = np.tile(np.eye(4)[None], (n_views, 1, 1))  # (N, 4, 4)
+
+  for i in range(n_views):
+      # Sample a random rotation axis
+      axis = np.random.randn(3)
+      axis /= np.linalg.norm(axis)
+
+      # Sample a random small angle within [0, max_angle]
+      angle = np.random.uniform(-max_angle_radians, max_angle_radians)
+
+      # Create the rotation
+      rotvec = axis * angle  # axis-angle representation
+      rotation = R.from_rotvec(rotvec).as_matrix()
+
+      # Insert into the rotation part of the 4x4 matrix
+      cam_in_obs[i, :3, :3] = rotation
+
+      # Translation remains zero (at origin)
+
   return cam_in_obs
 
 

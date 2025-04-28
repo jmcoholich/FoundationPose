@@ -14,6 +14,7 @@ import ast
 from pupil_apriltags import Detector
 from scipy.spatial.transform import Rotation as R
 import os
+import numpy as np
 
 
 def main():
@@ -27,11 +28,14 @@ def main():
     # parser.add_argument('--debug_dir', type=str, default=f'{code_dir}/debug')
     # parser.add_argument('--mask_dir', type=str, default=f'{code_dir}/demo_data/mustard0/masks')
     parser.add_argument('--prompts', type=str, nargs='+')
-    parser.add_argument('--init_rot_guess', type=ast.literal_eval, default='[[1, 0, 0], [0, 1, 0], [0, 0, 1]]')
+    parser.add_argument('--init_rot_guess', type=ast.literal_eval)
     parser.add_argument('--map_to_table_frame', action='store_true', help='whether to map the object pose to the table frame')
+    parser.add_argument('--use_all_masks', action='store_true', help='condition on masks at every timestep')
     parser.add_argument('--headless', action='store_true', help='do not show the visualization, good for running on a server')
 
     args = parser.parse_args()
+    for i in range(len(args.prompts)):
+        args.prompts[i] = args.prompts[i].replace(' ', '_')
     # breakpoint()
     # args.mask_dir = args.mask_dir.replace(' ', '_')
     # args.debug_dir = args.debug_dir.replace(' ', '_')
@@ -47,7 +51,12 @@ def main():
     # debug_dir = args.debug_dir
     # os.system(f'rm -rf {debug_dir}/* && mkdir -p {debug_dir}/track_vis {debug_dir}/ob_in_cam')
 
-    to_origin, extents = trimesh.bounds.oriented_bounds(mesh)
+    # to_origin, extents = trimesh.bounds.oriented_bounds(mesh)
+    # I want to preserve the mesh axes for downstream transforms
+    centroid = mesh.centroid
+    to_origin = np.eye(4)
+    to_origin[:3, 3] = -centroid
+    extents = mesh.extents
     bbox = np.stack([-extents/2, extents/2], axis=0).reshape(2,3)
 
     scorer = ScorePredictor()
@@ -86,6 +95,8 @@ def main():
             poses = []
             for j in range(len(ests)):
                 try:
+                    if not args.use_all_masks:
+                        raise ValueError("escaping mask usage")
                     mask = reader.get_mask(i, dirname="masks_" + args.prompts[j]).astype(bool)
                 except:
                     print("@"*20 + "\nno mask\n" + "@"*20)

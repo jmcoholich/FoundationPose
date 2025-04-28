@@ -2,10 +2,31 @@
 
 # make sure the conda env is "demo_translate"
 set -ex
-DEMO_DATASET_DIR="/data3/stack_three_blocks_all"
-PROMPTS=("red cube" "blue cube" "green cube")  # for lang-sam segmentations. Assumes same CAD model for all
-MESH_FILE="cube.obj"           # relative to DEMO_DATASET_DIR
-OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose"
+
+# -------------------------------------------------------------------------------------------------------------
+
+
+
+# DEMO_DATASET_DIR="/data3/stack_three_blocks_all"
+# PROMPTS=("red cube" "blue cube" "green cube")  # for lang-sam segmentations. Assumes same CAD model for all
+# MESH_FILE="cube.obj"           # relative to DEMO_DATASET_DIR
+# OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose_blocks"
+
+
+# DEMO_DATASET_DIR="/data3/stack_three_cups_all"
+# PROMPTS=("orange cup" "white cup that is NOT teal" "teal cup")  # for lang-sam segmentations. Assumes same CAD model for all
+# MESH_FILE="cup.obj"           # relative to DEMO_DATASET_DIR
+# OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose_cups"
+
+
+DEMO_DATASET_DIR="/data3/stack_three_plates_all"
+PROMPTS=("orange plate" "yellow plate" "teal plate")  # for lang-sam segmentations. Assumes same CAD model for all
+MESH_FILE="plate.obj"           # relative to DEMO_DATASET_DIR
+OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose_plates"
+
+
+
+# -------------------------------------------------------------------------------------------------------------
 CAM_NUMBER=1 # foundation pose only needs to be run on one camera -- the one facing the april tag
 
 # get the home directory of the current user

@@ -2,7 +2,7 @@
 set -ex
 
 
-INPUT_DIR="for_FoundationPose"
+INPUT_DIR="for_FoundationPose_blocks"
 PROMPTS=("blue_cube" "red_cube" "green_cube")  # just to get mask dirs
 
 # Determine if headless
@@ -34,6 +34,8 @@ for subdir in "$INPUT_DIR"/*; do
         --debug 2 \
         --prompts "${PROMPTS[@]}" \
         --map_to_table_frame \
+        --init_rot_guess '[[1, 0, 0], [0, 1, 0], [0, 0, 1]]' \
+        --use_all_masks \
         $HEADLESS_ARG
 
     yes | ffmpeg -framerate 20 -i "$INPUT_DIR/$subdir_name/track_vis/%04d.png" \
