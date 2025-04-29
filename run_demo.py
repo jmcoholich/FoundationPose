@@ -11,10 +11,32 @@ from estimater import *
 from datareader import *
 import argparse
 import ast
-from pupil_apriltags import Detector
+from pupil_apriltags import Detector, Detection
 from scipy.spatial.transform import Rotation as R
 import os
 import numpy as np
+
+CAM_TAG_DEFAULT_DETECTION = Detection()
+CAM_TAG_DEFAULT_DETECTION.tag_family = b'tagStandard41h12'
+CAM_TAG_DEFAULT_DETECTION.tag_id = 0
+CAM_TAG_DEFAULT_DETECTION.hamming = 0
+CAM_TAG_DEFAULT_DETECTION.decision_margin = 0.0
+CAM_TAG_DEFAULT_DETECTION.homography = np.array([[ 3.52548972e+01,  5.86007098e+00,  9.19357271e+02],
+                                                  [-4.51931082e+00,  4.51964660e+01,  2.12557441e+02],
+                                                  [-1.11048126e-02,  7.12507814e-03,  1.00000000e+00]])
+CAM_TAG_DEFAULT_DETECTION.center = np.array([919.35727091, 212.55744096])
+CAM_TAG_DEFAULT_DETECTION.corners = np.array([[874.0289917,  257.5776062],
+                                                  [964.30993652, 254.24642944],
+                                                  [966.36889648, 165.8653717],
+                                                  [874.76098633, 171.19895935]])
+CAM_TAG_DEFAULT_DETECTION.pose_R = np.array([[ 0.99489053,  0.04440697,  0.09066891],
+                                                  [-0.03501397,  0.99409808, -0.10267929],
+                                                  [-0.09469346,  0.09897998,  0.99057363]])
+CAM_TAG_DEFAULT_DETECTION.pose_t = np.array([[ 0.64103056],
+                                                  [-0.16901774],
+                                                  [ 1.0445981]])
+CAM_TAG_DEFAULT_DETECTION.pose_err = 0.0
+
 
 
 def main():
@@ -189,11 +211,15 @@ def get_april_tag(img, reader):
                     break
             else:
                 if name == "cam_tag":
-                    raise ValueError(f"No April Tags detected for tag {name}")
+                    # raise ValueError(f"No April Tags detected for tag {name}")
+                    print(f"No April Tags detected for tag {name}, using default detection")
+                    props["detection"] = CAM_TAG_DEFAULT_DETECTION
                 else:
                     props["detection"] = None
         else:
-            raise ValueError(f"No April Tags detected for tag {name}")
+            # raise ValueError(f"No April Tags detected for tag {name}")
+            print(f"No April Tags detected for tag {name}, using default detection")
+            props["detection"] = CAM_TAG_DEFAULT_DETECTION
     return tags
     # all_tags = [tags["cam_tag"]["detection"], tags["coke_tag"]["detection"]]
     # all_tags = [tags["cam_tag"]["detection"]]
