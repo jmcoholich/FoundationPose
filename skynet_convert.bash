@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #SBATCH --job-name=foundationpose_array
-#SBATCH --partition=overcap
+#SBATCH --partition=kira-lab
 #SBATCH --gres=gpu:2080_ti:1
 #SBATCH --cpus-per-task=8
 #SBATCH --array=1-60
@@ -14,7 +14,7 @@ eval "$(conda shell.bash hook)"
 conda activate demo_translate
 
 # -------------------------------------------------------------------------------------------------------------
-ROOT=$HOME
+ROOT=$HOME/fp_data
 
 # parallel arrays for dataset configs
 DEMO_DATASET_DIRS=( \
@@ -70,6 +70,10 @@ for i in "${!DEMO_DATASET_DIRS[@]}"; do
       --input_dir "$this_out/rgb" \
       --prompts "${PROMPTS[@]}"
 
+    # get demo_dataset_dir basename
+    DIR_BASENAME=$(basename "$DEMO_DATASET_DIR")
+    # sync results back to my PC
+    rsync -ahP $this_out jcoholich@143.215.128.197:/data3/fp_data/$DIR_BASENAME/${OUTPUT_SUFFIX[$i]}/
     # once we’ve matched, break both loops
     break 2
   done
