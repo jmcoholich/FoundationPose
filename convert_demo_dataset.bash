@@ -27,7 +27,7 @@ OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose_plates"
 
 
 # -------------------------------------------------------------------------------------------------------------
-CAM_NUMBER=1 # foundation pose only needs to be run on one camera -- the one facing the april tag
+# CAM_NUMBER=1 # foundation pose only needs to be run on one camera -- the one facing the april tag
 
 # get the home directory of the current user
 USER_HOME=$(eval echo "~$USER")
@@ -54,7 +54,6 @@ for subdir in "$DEMO_DATASET_DIR"/demonstration*; do
 
   echo "Running FoundationPose on $subdir_name for camera $cam_num"
   python demo2dirs.py \
-    --cam_num "$CAM_NUMBER" \
     --output_dir "$this_out" \
     --mesh_file "$DEMO_DATASET_DIR/$MESH_FILE" \
     --input_dir "$subdir"

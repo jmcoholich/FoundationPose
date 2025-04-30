@@ -4,6 +4,7 @@ set -ex
 
 INPUT_DIR="for_FoundationPose_cups"
 PROMPTS=("orange cup" "white cup that is NOT teal" "teal cup")  # for lang-sam segmentations. Assumes same CAD model for all
+CAM_NUMBER=1
 
 # Determine if headless
 HEADLESS_ARG=""

@@ -7,7 +7,7 @@ import numpy as np
 
 for obj in ["blocks", "plates", "cups"]:
     print(f"Processing object: {obj}")
-    h5_dir = f"/data3/stack_three_{obj}_real/"
+    h5_dir = f"/data3/stack_three_{obj}_real_with_poses/"
     foundationPose_dir = f"/data3/stack_three_{obj}_all/for_FoundationPose_{obj}"
     print(f"H5 Directory: {h5_dir}")
     print(f"FoundationPose Directory: {foundationPose_dir}")
@@ -19,7 +19,7 @@ for obj in ["blocks", "plates", "cups"]:
         h5_path = os.path.join(h5_dir, h5_filename)
         print(f"Processing h5 file: {h5_filename}")
         # Open the h5 file
-        with h5py.File(h5_path, 'a') as h5_file:
+        with h5py.File(h5_path, 'r+') as h5_file:
 
             # get the demo number
             demo_num = h5_filename.split('_')[1].split('.')[0]
@@ -59,8 +59,12 @@ for obj in ["blocks", "plates", "cups"]:
                 ckey = f"cam_poses_{obj_prompt}"
                 if rkey in h5_file: del h5_file[rkey]
                 if ckey in h5_file: del h5_file[ckey]
-                h5_file[rkey] = np.array(robot_poses)
-                h5_file[ckey] = np.array(cam_poses)
+                # h5_file[rkey] = np.array(robot_poses)
+                # h5_file[ckey] = np.array(cam_poses)
+                h5_file.create_dataset(rkey, data=np.array(robot_poses), compression='gzip', compression_opts=9)
+                h5_file.create_dataset(ckey, data=np.array(cam_poses), compression='gzip', compression_opts=9)
+                h5_file.flush()
+        print(f"Finished processing h5 file: {h5_filename}")
 
 
 

@@ -21,12 +21,12 @@ def main():
         required=True,
         help="Directory where output subfolders (depth, rgb, mesh) will be created"
     )
-    parser.add_argument(
-        "--cam_num",
-        type=int,
-        default=2,
-        help="Camera index to extract (default: 2)"
-    )
+    # parser.add_argument(
+    #     "--cam_num",
+    #     type=int,
+    #     default=2,
+    #     help="Camera index to extract (default: 2)"
+    # )
     parser.add_argument(
         "--cam_K_matrix",
         default="912.0 0.0 360.0\n0.0 912.0 360.0\n0.0 0.0 1\n",
@@ -55,32 +55,36 @@ def main():
     depth_dir = os.path.join(args.output_dir, 'depth')
     rgb_dir   = os.path.join(args.output_dir, 'rgb')
     mesh_dir  = os.path.join(args.output_dir, 'mesh')
-    for d in (depth_dir, rgb_dir, mesh_dir):
-        os.makedirs(d, exist_ok=True)
+    # depth and rgb_dirs need suffix cam_num
+    os.makedirs(mesh_dir, exist_ok=True)
+    for cam_num in [0,1,2]:
+        for d in (depth_dir, rgb_dir):
+            cam_dir = f"{d}_cam_{cam_num}"
+            os.makedirs(cam_dir, exist_ok=True)
 
     # Allow Pillow to handle large PNG blocks
     ImageFile.MAXBLOCK = 2**20
 
     # Worker function to save one frame (depth + rgb)
-    def save_frame(i):
+    def save_frame(i, cam_num):
         # Depth: crop to selected camera
-        depth = demo['depth_frames'][i, args.cam_num]
+        depth = demo['depth_frames'][i, cam_num]
         Image.fromarray(depth).save(
-            os.path.join(depth_dir, f"{i:04d}.png"),
+            os.path.join(depth_dir + f"_cam_{cam_num}", f"{i:04d}.png"),
             compress_level=1
         )
         # RGB: convert BGR->RGB
-        rgb = demo['rgb_frames'][i, args.cam_num, ..., ::-1]
+        rgb = demo['rgb_frames'][i, cam_num, ..., ::-1]
         Image.fromarray(rgb).save(
-            os.path.join(rgb_dir, f"{i:04d}.png"),
+            os.path.join(rgb_dir + f"_cam_{cam_num}", f"{i:04d}.png"),
             compress_level=1
         )
 
     # Parallelize all the saves with a ThreadPool
     max_workers = os.cpu_count() or 4
     with ThreadPoolExecutor(max_workers=max_workers) as exe:
-        futures = [exe.submit(save_frame, i) for i in range(n_frames)]
-        for _ in tqdm(as_completed(futures), total=n_frames, desc="Extracting frames"):
+        futures = [exe.submit(save_frame, i, cam_num) for i in range(n_frames) for cam_num in range(3)]
+        for _ in tqdm(as_completed(futures), total=n_frames*3, desc="Extracting frames"):
             pass
 
     # Copy mesh and write camera intrinsics

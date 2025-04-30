@@ -15,6 +15,7 @@ from pupil_apriltags import Detector, Detection
 from scipy.spatial.transform import Rotation as R
 import os
 import numpy as np
+from Utils import to_homo
 
 CAM_TAG_DEFAULT_DETECTION = Detection()
 CAM_TAG_DEFAULT_DETECTION.tag_family = b'tagStandard41h12'
@@ -80,6 +81,7 @@ def main():
     to_origin[:3, 3] = -centroid
     extents = mesh.extents
     bbox = np.stack([-extents/2, extents/2], axis=0).reshape(2,3)
+    bbox_homo = to_homo(bbox)
 
     scorer = ScorePredictor()
     refiner = PoseRefinePredictor()
@@ -134,9 +136,19 @@ def main():
             os.makedirs(f'{output_dirs[j]}', exist_ok=True)
             cam2block = poses[j].reshape(4,4)
             np.savetxt(f'{output_dirs[j]}/{reader.id_strs[i]}.txt', cam2block)
+
+            # also save 3D bounding box of the detected objects
+            center_pose = cam2block @ np.linalg.inv(to_origin)
+            bbox_cam_frame = (center_pose @ bbox_homo.T).T
+            np.savetxt(f'{output_dirs[j]}/{reader.id_strs[i]}_3d_bbox_cam_frame.txt', bbox_cam_frame)
+
             if args.map_to_table_frame:
                 robot2block = ROBO2TAG @ np.linalg.inv(cam2tag) @ cam2block
                 np.savetxt(f'{output_dirs[j]}/{reader.id_strs[i]}_robot2block.txt', robot2block.reshape(4,4))
+
+                bbox_robot_frame = (ROBO2TAG @ np.linalg.inv(cam2tag) @ bbox_cam_frame.T).T
+                np.savetxt(f'{output_dirs[j]}/{reader.id_strs[i]}_3d_bbox_robot_frame.txt', bbox_cam_frame)
+
                 transforms[args.prompts[j]] = robot2block
                 # print(f"translation: {translation}")
 
