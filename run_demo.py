@@ -90,7 +90,7 @@ def main():
     ests = [FoundationPose(model_pts=mesh.vertices, model_normals=mesh.vertex_normals, mesh=mesh, scorer=scorer, refiner=refiner,  debug=debug, glctx=glctx) for _ in range(len(args.prompts))]
     logging.info("estimator initialization done")
 
-    reader = YcbineoatReader(video_dir=args.test_scene_dir, shorter_side=None, zfar=np.inf)
+    reader = YcbineoatReader(video_dir=args.test_scene_dir, cam_num=args.cam_number, shorter_side=None, zfar=np.inf)
 
     for i in range(len(reader.color_files)):
         logging.info(f'i:{i}')
