@@ -1,4 +1,6 @@
 *.mp4
+_old/
+detected_boxes/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
