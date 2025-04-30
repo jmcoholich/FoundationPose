@@ -37,6 +37,7 @@ for subdir in "$INPUT_DIR"/*; do
         --map_to_table_frame \
         --init_rot_guess '[[1, 0, 0], [0, 1, 0], [0, 0, 1]]' \
         --use_all_masks \
+        --cam_number $CAM_NUMBER \
         $HEADLESS_ARG
 
     yes | ffmpeg -framerate 20 -i "$INPUT_DIR/$subdir_name/track_vis/%04d.png" \

@@ -55,11 +55,11 @@ def get_bop_video_dirs(dataset):
 
 
 class YcbineoatReader:
-  def __init__(self,video_dir, downscale=1, shorter_side=None, zfar=np.inf):
+  def __init__(self,video_dir, cam_num, downscale=1, shorter_side=None, zfar=np.inf):
     self.video_dir = video_dir
     self.downscale = downscale
     self.zfar = zfar
-    self.color_files = sorted(glob.glob(f"{self.video_dir}/rgb/*.png"))
+    self.color_files = sorted(glob.glob(f"{self.video_dir}/rgb_cam_{cam_num}/*.png"))
     self.K = np.loadtxt(f'{video_dir}/cam_K.txt').reshape(3,3)
     self.id_strs = []
     for color_file in self.color_files:
@@ -110,7 +110,7 @@ class YcbineoatReader:
     return color
 
   def get_mask(self,i, dirname="masks"):
-    mask = cv2.imread(self.color_files[i].replace('rgb', dirname),-1)
+    mask = cv2.imread(self.color_files[i] + dirname,-1)
     if len(mask.shape)==3:
       for c in range(3):
         if mask[...,c].sum()>0:

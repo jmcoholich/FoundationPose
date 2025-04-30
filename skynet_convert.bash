@@ -68,7 +68,8 @@ for i in "${!DEMO_DATASET_DIRS[@]}"; do
 
     python $HOME/demo_translate/run_lang_sam.py \
       --input_dir "$this_out/rgb" \
-      --prompts "${PROMPTS[@]}"
+      --prompts "${PROMPTS[@]}" \
+      --bs 3
 
     # get demo_dataset_dir basename
     DIR_BASENAME=$(basename "$DEMO_DATASET_DIR")

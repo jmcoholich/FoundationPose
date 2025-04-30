@@ -35,6 +35,7 @@ for subdir in "$INPUT_DIR"/*; do
         --debug 2 \
         --prompts "${PROMPTS[@]}" \
         --map_to_table_frame \
+        --cam_number $CAM_NUMBER \
         $HEADLESS_ARG
 
     yes | ffmpeg -framerate 20 -i "$INPUT_DIR/$subdir_name/track_vis/%04d.png" \

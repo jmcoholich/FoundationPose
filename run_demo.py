@@ -48,6 +48,7 @@ def main():
     parser.add_argument('--est_refine_iter', type=int, default=5)
     parser.add_argument('--track_refine_iter', type=int, default=2)
     parser.add_argument('--debug', type=int, default=1)
+    parser.add_argument('--cam_number', type=int)
     # parser.add_argument('--debug_dir', type=str, default=f'{code_dir}/debug')
     # parser.add_argument('--mask_dir', type=str, default=f'{code_dir}/demo_data/mustard0/masks')
     parser.add_argument('--prompts', type=str, nargs='+')
@@ -98,7 +99,7 @@ def main():
         if i==0:
             poses = []
             for j in range(len(ests)):
-                mask = reader.get_mask(0, dirname="masks_" + args.prompts[j]).astype(bool)
+                mask = reader.get_mask(0, dirname="_masks_" + args.prompts[j]).astype(bool)
                 poses.append(ests[j].register(K=reader.K, rgb=color, depth=depth, ob_mask=mask, iteration=args.est_refine_iter, init_rot_guess=args.init_rot_guess))
             if args.map_to_table_frame:
                 detections = get_april_tag(color, reader)
