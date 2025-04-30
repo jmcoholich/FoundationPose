@@ -7,19 +7,19 @@ set -ex
 
 
 
-# DEMO_DATASET_DIR="/data3/stack_three_blocks_all"
+# DEMO_DATASET_DIR="/data3/stack_three_blocks"
 # PROMPTS=("red cube" "blue cube" "green cube")  # for lang-sam segmentations. Assumes same CAD model for all
 # MESH_FILE="cube.obj"           # relative to DEMO_DATASET_DIR
 # OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose_blocks"
 
 
-# DEMO_DATASET_DIR="/data3/stack_three_cups_all"
+# DEMO_DATASET_DIR="/data3/stack_three_cups"
 # PROMPTS=("orange cup" "white cup that is NOT teal" "teal cup")  # for lang-sam segmentations. Assumes same CAD model for all
 # MESH_FILE="cup.obj"           # relative to DEMO_DATASET_DIR
 # OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose_cups"
 
 
-DEMO_DATASET_DIR="/data3/stack_three_plates_all"
+DEMO_DATASET_DIR="/data3/stack_three_plates"
 PROMPTS=("orange plate" "yellow plate" "teal plate")  # for lang-sam segmentations. Assumes same CAD model for all
 MESH_FILE="plate.obj"           # relative to DEMO_DATASET_DIR
 OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose_plates"
@@ -29,8 +29,6 @@ OUTPUT_DIR="${DEMO_DATASET_DIR}/for_FoundationPose_plates"
 # -------------------------------------------------------------------------------------------------------------
 # CAM_NUMBER=1 # foundation pose only needs to be run on one camera -- the one facing the april tag
 
-# get the home directory of the current user
-USER_HOME=$(eval echo "~$USER")
 
 # ensure the root input dir exists
 if [ ! -d "$DEMO_DATASET_DIR" ]; then
@@ -58,7 +56,7 @@ for subdir in "$DEMO_DATASET_DIR"/demonstration*; do
     --mesh_file "$DEMO_DATASET_DIR/$MESH_FILE" \
     --input_dir "$subdir"
   # run lang-sam to get masks for first images
-  python $USER_HOME/demo_translate/run_lang_sam.py \
+  python $HOME/demo_translate/run_lang_sam.py \
   --input_dir "$this_out/rgb" \
   --prompts "${PROMPTS[@]}"
 done
