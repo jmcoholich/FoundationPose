@@ -32,13 +32,9 @@ for i in "${!OUTPUT_DIRS[@]}"; do
 
     echo "Processing task: $TASK_NAME"
     echo "Finding H5 files in $H5_ROOT/$TASK_NAME..."
-    H5_FILES=$(find "$H5_ROOT/$TASK_NAME" -type f -name "*demo*.h5")
-
-    for h5_file in $H5_FILES; do
-        echo "  Copying $h5_file to $OUTPUT_DIR"
-        rsync -a "$h5_file" "$OUTPUT_DIR"
-    done
+    find "$H5_ROOT/$TASK_NAME" -type f -name "*demo*.h5" | xargs -P 4 -I {} rsync -a {} "$OUTPUT_DIR"
 done
+
 # copy all mp4 files over to output_dirs
 echo "Copying MP4 files to output directories..."
 for i in "${!OUTPUT_DIRS[@]}"; do
@@ -47,12 +43,7 @@ for i in "${!OUTPUT_DIRS[@]}"; do
 
     echo "Processing FoundationPose directory: $FP_DIR"
     echo "Finding MP4 files in $FP_DIR..."
-    MP4_FILES=$(find -L "$FP_DIR" -type f -name "*.mp4")
-
-    for mp4_file in $MP4_FILES; do
-        echo "  Copying $mp4_file to $OUTPUT_DIR"
-        rsync -a "$mp4_file" "$OUTPUT_DIR"
-    done
+    find -L "$FP_DIR" -type f -name "*.mp4" | xargs -P 4 -I {} rsync -a {} "$OUTPUT_DIR"
 done
 
 set -x
