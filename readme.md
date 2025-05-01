@@ -8,20 +8,32 @@ To convert a folder with a bunch of demos into the format needed for FoundationP
 bash convert_demo_dataset.bash
 ```
 
-The FoundationPose tracking requires the mask for the first frame only. Its worth checking that this is correct, as sometimes langSAM messes up and highlights a different block. Not sure why.
-
-To run FoundationPose on all of these, enter the docker container (installation below) and run
+or
 
 ```bash
-bash run_on_demo_dataset.bash
+bash loop_convert_demo_dataset.bash
+```
+
+or to run on a cluster (recommended for speed)
+
+```bash
+sbatch skynet_convert.bash
+```
+
+To run foundation pose, enter the docker container (installation below) and run
+
+```bash
+bash run_plates.bash && bash run_blocks.bash && bash run_cups.bash
+```
+
+Finally, run this script to obtain folders of updated h5_files and videos of tracking results
+
+```bash
+bash compile_results.bash
 ```
 
 (I tried installing langSAM in the docker containiner so everything can be run together, FoundationPose and LangSAM have too many conflicting dependencies so I gave up.)
 
-TODO:
-- <strike>map pose estimates to robot frame with April tag </strike>
-- Add object pose estimates to pkl or hdf5 files (for Neural assets training)
-- <strike>Can I track all the objects at once? Instead of having to run this whole pipeline for every new object </strike>
 
 # FoundationPose: Unified 6D Pose Estimation and Tracking of Novel Objects
 [[Paper]](https://arxiv.org/abs/2312.08344) [[Website]](https://nvlabs.github.io/FoundationPose/)

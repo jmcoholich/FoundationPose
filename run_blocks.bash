@@ -4,7 +4,7 @@ set -ex
 
 INPUT_DIR="for_FoundationPose_blocks"
 PROMPTS=("blue_cube" "red_cube" "green_cube")  # just to get mask dirs
-CAM_NUMER=1
+CAM_NUMBER=1
 
 # Determine if headless
 HEADLESS_ARG=""
