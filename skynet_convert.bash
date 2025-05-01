@@ -74,7 +74,10 @@ for i in "${!DEMO_DATASET_DIRS[@]}"; do
     # get demo_dataset_dir basename
     DIR_BASENAME=$(basename "$DEMO_DATASET_DIR")
     # sync results back to my PC
-    rsync -ahP $this_out jcoholich@143.215.128.197:/data3/fp_data/$DIR_BASENAME/${OUTPUT_SUFFIX[$i]}/
+    for attempt in {1..3}; do
+      rsync -ahP $this_out jcoholich@143.215.128.197:/data3/fp_data/$DIR_BASENAME/${OUTPUT_SUFFIX[$i]}/
+      sleep 5
+    done
     # once we’ve matched, break both loops
     break 2
   done
