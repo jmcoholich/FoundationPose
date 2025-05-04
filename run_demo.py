@@ -172,7 +172,9 @@ def main():
 
         if debug>=2:
             os.makedirs(f'{args.test_scene_dir}/track_vis', exist_ok=True)
-            imageio.imwrite(f'{args.test_scene_dir}/track_vis/{reader.id_strs[i]}.png', vis)
+            path = f'{args.test_scene_dir}/track_vis/{reader.id_strs[i]}.png'
+            # imageio.imwrite(path, vis)
+            cv2.imwrite(path, cv2.cvtColor(vis, cv2.COLOR_RGB2BGR))  # if vis is RGB
 
 
 def add_translation_text(vis, translations, locations, frame_index):

@@ -702,42 +702,48 @@ def project_3d_to_2d(pt,K,ob_in_cam):
   return projected.reshape(-1)[:2].round().astype(int)
 
 
-def draw_xyz_axis(color, ob_in_cam, scale=0.1, K=np.eye(3), thickness=3, transparency=0,is_input_rgb=False):
+def draw_xyz_axis(color, ob_in_cam, scale=0.1, K=np.eye(3), thickness=3, transparency=0, is_input_rgb=False):
   '''
-  @color: BGR
+  Draw XYZ axes on a color image.
+  - @color: RGB if is_input_rgb=True, otherwise BGR
   '''
   if is_input_rgb:
-    color = cv2.cvtColor(color,cv2.COLOR_RGB2BGR)
-  xx = np.array([1,0,0,1]).astype(float)
-  yy = np.array([0,1,0,1]).astype(float)
-  zz = np.array([0,0,1,1]).astype(float)
-  xx[:3] = xx[:3]*scale
-  yy[:3] = yy[:3]*scale
-  zz[:3] = zz[:3]*scale
-  origin = tuple(project_3d_to_2d(np.array([0,0,0,1]), K, ob_in_cam))
-  xx = tuple(project_3d_to_2d(xx, K, ob_in_cam))
-  yy = tuple(project_3d_to_2d(yy, K, ob_in_cam))
-  zz = tuple(project_3d_to_2d(zz, K, ob_in_cam))
-  line_type = cv2.LINE_AA
-  arrow_len = 0
-  tmp = color.copy()
-  tmp1 = tmp.copy()
-  tmp1 = cv2.arrowedLine(tmp1, origin, xx, color=(0,0,255), thickness=thickness,line_type=line_type, tipLength=arrow_len)
-  mask = np.linalg.norm(tmp1-tmp, axis=-1)>0
-  tmp[mask] = tmp[mask]*transparency + tmp1[mask]*(1-transparency)
-  tmp1 = tmp.copy()
-  tmp1 = cv2.arrowedLine(tmp1, origin, yy, color=(0,255,0), thickness=thickness,line_type=line_type, tipLength=arrow_len)
-  mask = np.linalg.norm(tmp1-tmp, axis=-1)>0
-  tmp[mask] = tmp[mask]*transparency + tmp1[mask]*(1-transparency)
-  tmp1 = tmp.copy()
-  tmp1 = cv2.arrowedLine(tmp1, origin, zz, color=(255,0,0), thickness=thickness,line_type=line_type, tipLength=arrow_len)
-  mask = np.linalg.norm(tmp1-tmp, axis=-1)>0
-  tmp[mask] = tmp[mask]*transparency + tmp1[mask]*(1-transparency)
-  tmp = tmp.astype(np.uint8)
-  if is_input_rgb:
-    tmp = cv2.cvtColor(tmp,cv2.COLOR_BGR2RGB)
+    color = cv2.cvtColor(color, cv2.COLOR_RGB2BGR)
 
-  return tmp
+  # Define axis endpoints in homogeneous coordinates
+  points_3d = np.array([
+    [0, 0, 0, 1],             # origin
+    [scale, 0, 0, 1],         # x
+    [0, scale, 0, 1],         # y
+    [0, 0, scale, 1],         # z
+  ])
+
+  # Project all points at once
+  pts_2d = []
+  for pt in points_3d:
+    projected = K @ (ob_in_cam @ pt.reshape(4, 1))[:3]
+    projected /= projected[2]
+    pts_2d.append(projected[:2].flatten().round().astype(int))
+  origin, x_pt, y_pt, z_pt = pts_2d
+
+  if transparency == 0:
+    cv2.arrowedLine(color, tuple(origin), tuple(x_pt), color=(0, 0, 255), thickness=thickness, line_type=cv2.LINE_AA, tipLength=0)
+    cv2.arrowedLine(color, tuple(origin), tuple(y_pt), color=(0, 255, 0), thickness=thickness, line_type=cv2.LINE_AA, tipLength=0)
+    cv2.arrowedLine(color, tuple(origin), tuple(z_pt), color=(255, 0, 0), thickness=thickness, line_type=cv2.LINE_AA, tipLength=0)
+    if is_input_rgb:
+      return cv2.cvtColor(color, cv2.COLOR_BGR2RGB)
+    return color
+
+  # Blending logic (only runs if transparency > 0)
+  overlay = color.copy()
+  cv2.arrowedLine(overlay, tuple(origin), tuple(x_pt), color=(0, 0, 255), thickness=thickness, line_type=cv2.LINE_AA, tipLength=0)
+  cv2.arrowedLine(overlay, tuple(origin), tuple(y_pt), color=(0, 255, 0), thickness=thickness, line_type=cv2.LINE_AA, tipLength=0)
+  cv2.arrowedLine(overlay, tuple(origin), tuple(z_pt), color=(255, 0, 0), thickness=thickness, line_type=cv2.LINE_AA, tipLength=0)
+  blended = cv2.addWeighted(overlay, 1 - transparency, color, transparency, 0)
+
+  if is_input_rgb:
+    return cv2.cvtColor(blended, cv2.COLOR_BGR2RGB)
+  return blended
 
 
 def draw_posed_3d_box(K, img, ob_in_cam, bbox, line_color=(0,255,0), linewidth=2):
