@@ -82,7 +82,9 @@ def main():
     to_origin[:3, 3] = -centroid
     extents = mesh.extents
     bbox = np.stack([-extents/2, extents/2], axis=0).reshape(2,3)
-    bbox_homo = to_homo(bbox)
+    bbox_homo = to_homo(np.stack([extents/2, extents/2, extents/2, extents/2], axis=0).reshape(4,3))
+    for i in range(3):
+        bbox_homo[i, i] *= -1
 
     scorer = ScorePredictor()
     refiner = PoseRefinePredictor()

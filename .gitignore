@@ -1,6 +1,7 @@
 *.mp4
 _old/
 detected_boxes/
+for_FoundationPose*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
