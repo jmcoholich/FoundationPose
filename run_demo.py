@@ -121,19 +121,13 @@ def main():
         else:
             poses = []
             for j in range(len(ests)):
-                try:
-                    if not args.use_all_masks:
-                        raise ValueError("escaping mask usage")
-                    mask = reader.get_mask(i, dirname="masks_" + args.prompts[j]).astype(bool)
-                except:
+                if args.use_all_masks:
+                    mask = reader.get_mask(i, dirname="_masks_" + args.prompts[j]).astype(bool)
+                    print("="*20 + "\nusing mask\n" + "="*20)
+                    poses.append(ests[j].register(K=reader.K, rgb=color, depth=depth, ob_mask=mask, iteration=args.est_refine_iter, init_rot_guess=args.init_rot_guess))
+                else:
                     print("@"*20 + "\nno mask\n" + "@"*20)
                     poses.append(ests[j].track_one(rgb=color, depth=depth, K=reader.K, iteration=args.track_refine_iter))
-                    continue
-                # print the prompt and show the mask with  cv2.imshow
-                # cv2.imshow(args.prompts[j], mask.astype(np.uint8)*255)
-                print("="*20 + "\nusing mask\n" + "="*20)
-                poses.append(ests[j].register(K=reader.K, rgb=color, depth=depth, ob_mask=mask, iteration=args.est_refine_iter, init_rot_guess=args.init_rot_guess))
-            # cv2.waitKey(0)
         transforms = {}
         for j in range(len(ests)):
             os.makedirs(f'{output_dirs[j]}', exist_ok=True)
