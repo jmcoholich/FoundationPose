@@ -89,12 +89,12 @@ def main():
                         obj_poses["cam_frame"][obj_prompt].append(cam_pose)
 
                     with open(bbox_3D_cam_frame, 'r') as f:
-                        bbox_3D_cam_frame_data = np.array([float(x) for x in f.read().strip().split()]).reshape(2, 4)
+                        bbox_3D_cam_frame_data = np.array([float(x) for x in f.read().strip().split()]).reshape(4, 4)
                         # bboxes_3D_cam_frame.append(bbox_3D_cam_frame_data)
                         obj_3D_bboxes["cam_frame"][obj_prompt].append(bbox_3D_cam_frame_data)
 
                     with open(bbox_3D_robot_frame, 'r') as f:
-                        bbox_3D_robot_frame_data = np.array([float(x) for x in f.read().strip().split()]).reshape(2, 4)
+                        bbox_3D_robot_frame_data = np.array([float(x) for x in f.read().strip().split()]).reshape(4, 4)
                         # bboxes_3D_robot_frame.append(bbox_3D_robot_frame_data)
                         obj_3D_bboxes["robot_frame"][obj_prompt].append(bbox_3D_robot_frame_data)
 
