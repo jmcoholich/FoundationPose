@@ -5,7 +5,7 @@ set -ex
 
 # -------------------------------------------------------------------------------------------------------------
 # Loop over block, cup and plate datasets with their respective prompts, meshes and output dirs
-ROOT='/data3'
+ROOT='/data3/fp_data'
 # ROOT=$HOME
 
 DEMO_DATASET_DIRS=($ROOT/stack_three_blocks $ROOT/stack_three_cups $ROOT/stack_three_plates)
@@ -16,6 +16,8 @@ PROMPTS_LIST=(
   "orange cup;white cup that is NOT teal;teal cup"
   "orange plate;yellow plate;teal plate"
 )
+BOX_THRESHOLDS=(0.3 0.3 0.05)
+TEXT_THRESHOLDS=(0.25 0.25 0.1)
 
 for i in "${!DEMO_DATASET_DIRS[@]}"; do
   DEMO_DATASET_DIR="${DEMO_DATASET_DIRS[$i]}"
@@ -51,6 +53,35 @@ for i in "${!DEMO_DATASET_DIRS[@]}"; do
 
     python $HOME/demo_translate/run_lang_sam.py \
       --input_dir "$this_out/rgb" \
-      --prompts "${PROMPTS[@]}"
+      --prompts "${PROMPTS[@]}" \
+      --box_threshold "${BOX_THRESHOLDS[$i]}" \
+      --text_threshold "${TEXT_THRESHOLDS[$i]}"
+    # === ADDITION: Generate 3x3 tiled video ===
+    echo "Creating 3x3 mask overlay video from outputs..."
+
+    pushd "$this_out" > /dev/null
+
+    TILE_DIRS=($(find . -maxdepth 1 -type d -name 'rgb_cam_*_masks*' | sort))
+
+    mkdir -p tiled_frames
+
+    for i in $(find "${TILE_DIRS[0]}" -maxdepth 1 -type f -name '*_overlay.png' | sed 's/.*\///;s/_overlay\.png//' | sort); do
+      convert \( ${TILE_DIRS[0]}/${i}_overlay.png \
+                  ${TILE_DIRS[1]}/${i}_overlay.png \
+                  ${TILE_DIRS[2]}/${i}_overlay.png +append \) \
+              \( ${TILE_DIRS[3]}/${i}_overlay.png \
+                  ${TILE_DIRS[4]}/${i}_overlay.png \
+                  ${TILE_DIRS[5]}/${i}_overlay.png +append \) \
+              \( ${TILE_DIRS[6]}/${i}_overlay.png \
+                  ${TILE_DIRS[7]}/${i}_overlay.png \
+                  ${TILE_DIRS[8]}/${i}_overlay.png +append \) \
+              -append tiled_frames/${i}.png || break
+
+      convert tiled_frames/${i}.png -resize 50% tiled_frames/${i}.png
+    done
+
+    ffmpeg -y -r 10 -i tiled_frames/%04d.png -c:v mpeg4 -q:v 5 -pix_fmt yuv420p masks_${subdir_name}.mp4
+
+    popd > /dev/null
   done
 done
