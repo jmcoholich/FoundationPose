@@ -6,6 +6,7 @@ import h5py
 import numpy as np
 import argparse
 import cv2
+import pickle
 
 
 def get_args():
@@ -107,15 +108,32 @@ def main():
                         mask_img = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
                         if mask_img is None:
                             raise ValueError(f"Failed to read mask image: {mask_path}")
-                        # Ensure mask is binary (0 or 255)
-                        assert np.array_equal(np.unique(mask_img), [0, 255]), f"Mask image is not binary: {mask_path}"
                         masks[cam_idxs[cam]][obj_prompt].append(mask_img)
                         # masks_at_t.append(mask_img)
                     # masks.append(masks_at_t)
 
+            if "2D_bboxes" in h5_file: del h5_file["2D_bboxes"]
             if "masks" in h5_file: del h5_file["masks"]
             if "obj_poses" in h5_file: del h5_file["obj_poses"]
             if "obj_3D_bboxes" in h5_file: del h5_file["obj_3D_bboxes"]
+            # load boxes.pkl
+            pkl_file = os.path.join(fpose_subdir, "boxes.pkl")
+            if not os.path.exists(pkl_file):
+                raise FileNotFoundError(f"Boxes file not found: {pkl_file}")
+            with open(pkl_file, 'rb') as f:
+                boxes = pickle.load(f)
+
+            # save groups 2D_bboxes, cam, then array
+            # create a group for 2D_bboxes
+            h5_file.create_group("2D_bboxes")
+            for cam_key in boxes:
+                cam_num = int(cam_key.split("_")[-1])
+                # create a group for each camera
+                cam_group = h5_file["2D_bboxes"].create_group(cam_idxs[cam_num])
+                for prompt, bboxes in boxes[cam_key].items():
+                    # create a dataset for each prompt
+                    cam_group.create_dataset("_" + prompt.replace(' ', '_'), data=np.array(bboxes), compression='gzip', compression_opts=9)
+
             # Save the data to the h5 file
             h5_file.create_group("obj_poses")
             for pose_type in obj_poses:
