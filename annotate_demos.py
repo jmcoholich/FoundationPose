@@ -5,11 +5,20 @@ import os
 import sys
 import json
 import pickle
+import argparse
 
-thing = "plates"
-ROOT_DIR = f"/data3/fp_data/stack_three_{thing}/demonstration_stack_three_{thing}_000"
-INPUT_H5 = os.path.join(ROOT_DIR, "demo_000.h5")
-OUTPUT_H5 = os.path.join(ROOT_DIR, "demo_000_annotations.h5")
+parser = argparse.ArgumentParser(description="Annotate demonstration videos.")
+parser.add_argument("--thing", type=str, required=True, help="The type of object being annotated (e.g., 'plates').")
+parser.add_argument("--demo_num", type=str, required=True, help="The demonstration number (e.g., '000').")
+
+args = parser.parse_args()
+thing = args.thing
+demo_num = args.demo_num
+
+
+ROOT_DIR = f"/data3/fp_data/stack_three_{thing}/demonstration_stack_three_{thing}_{demo_num}"
+INPUT_H5 = os.path.join(ROOT_DIR, f"demo_{demo_num}.h5")
+OUTPUT_H5 = os.path.join(ROOT_DIR, f"demo_{demo_num}_annotations.h5")
 
 CAM_NAMES = ["front_cam", "overhead_cam", "side_cam"]
 OBJECT_LABELS = ["yellow plate", "orange plate", "teal plate"]
@@ -55,13 +64,29 @@ def draw_box(event, x, y, flags, param):
 cv2.namedWindow("Annotate")
 
 frame_idx = 0
+out_of_frame_flags = {}  # key: (cam, obj_label) → True if out_of_frame
+stopped_tracking = {}  # key: (cam, obj_label) → True if out_of_frame
+
 while frame_idx < T:
     for cam in CAM_NAMES:
         base_img = rgb_data[cam][frame_idx].copy()
         object_annots = {}
 
         for obj_idx, obj_label in enumerate(OBJECT_LABELS):
-            current_img = base_img.copy()
+            key_tuple = (cam, obj_label)
+            color = BOX_COLORS[obj_idx]
+
+            # Check if this object is currently marked out-of-frame
+            if out_of_frame_flags.get(key_tuple, False):
+                current_img = cv2.addWeighted(base_img, 0.3, np.full_like(base_img, 128), 0.7, 0)
+                print(f"⚠️  '{obj_label}' on {cam} is currently marked OUT OF FRAME. ")
+            elif stopped_tracking.get(key_tuple, False):
+                # even darker
+                current_img = cv2.addWeighted(base_img, 0.3, np.full_like(base_img, 0.0), 0.7, 0)
+                print(f"⚠️  '{obj_label}' on {cam} is currently marked STOP TRACKING. ")
+            else:
+                current_img = base_img.copy()
+
             box = None
             box_ready = False
             color = BOX_COLORS[obj_idx]
@@ -73,7 +98,8 @@ while frame_idx < T:
             print(f"\nFrame {frame_idx}, Camera {cam}, Object: {obj_label}")
             print("Draw a box with mouse OR press:")
             print("  [o] → out of frame")
-            print("  [x] → stop tracking")
+            if cam == "front_cam":
+                print("  [x] → stop tracking")
             print("  [n] → skip this object (no label)")
             print("  [u] → undo drawn box")
             print("  [c] → cancel and exit")
@@ -91,16 +117,23 @@ while frame_idx < T:
 
                 if box_ready:
                     object_annots[obj_label] = format_box(box)
+                    out_of_frame_flags[key_tuple] = False
                     print("Box saved.")
                     break
                 elif key == ord('o'):
+                    out_of_frame_flags[key_tuple] = True
                     object_annots[obj_label] = "out_of_frame"
+                    current_img = cv2.addWeighted(base_img, 0.3, np.full_like(base_img, 128), 0.7, 0)
                     print("Marked out of frame.")
                     break
                 elif key == ord('x'):
-                    object_annots[obj_label] = "stop_tracking"
-                    print("Marked stop tracking.")
-                    break
+                    if cam == "front_cam":  # Only valid on cam #1
+                        object_annots[obj_label] = "stop_tracking"
+                        print("Marked stop tracking.")
+                        stopped_tracking[key_tuple] = True
+                        break
+                    else:
+                        print("❌ 'stop_tracking' only allowed on front cam. Try again.")
                 elif key == ord('n'):
                     print("Skipped this object — no label recorded.")
                     break

@@ -58,6 +58,20 @@ def main():
     parser.add_argument('--headless', action='store_true', help='do not show the visualization, good for running on a server')
 
     args = parser.parse_args()
+
+    # load annotations pkl file (pkl file with "annotations" in the name in test_scene_dir)
+    annotations_file = None
+    for f in os.listdir(args.test_scene_dir):
+        if "annotations" in f and f.endswith('.pkl'):
+            annotations_file = os.path.join(args.test_scene_dir, f)
+            break
+    cam_idxs = ["side_cam", "front_cam", "overhead_cam"]
+    cam_name = cam_idxs[args.cam_number]
+    if annotations_file is not None:
+        # process annotations file, we only care about cam_number
+        with open(annotations_file, "rb") as f:
+            annotations = pickle.load(f)
+
     for i in range(len(args.prompts)):
         args.prompts[i] = args.prompts[i].replace(' ', '_')
     # breakpoint()
@@ -93,7 +107,8 @@ def main():
     logging.info("estimator initialization done")
 
     reader = YcbineoatReader(video_dir=args.test_scene_dir, cam_num=args.cam_number, shorter_side=None, zfar=np.inf)
-
+    stopped_tracking = [False, False, False]
+    out_of_frame = [False, False, False]
     for i in range(len(reader.color_files)):
         logging.info(f'i:{i}')
         color = reader.get_color(i)
@@ -121,6 +136,31 @@ def main():
         else:
             poses = []
             for j in range(len(ests)):
+                # if stop_tracking, continue to next iteration
+                img_key = f"{i}_{cam_name}"
+                obj_key = args.prompts[j].replace("_", " ")
+                if annotations_file is not None and img_key in annotations and obj_key in annotations[img_key]:
+                    print(annotations[img_key])
+                    val = annotations[img_key][obj_key]
+                    if val == "stop_tracking":
+                        print(f"Stopping tracking for {args.prompts[j]} at frame {i}")
+                        stopped_tracking[j] = True
+                    elif val == "out_of_frame":
+                        print(f"Object {args.prompts[j]} is out of frame at frame {i}")
+                        out_of_frame[j] = True
+                    else:
+                        # its a bounding box, reinit tracking w/ mask
+                        mask = reader.get_mask(i, dirname="_masks_" + args.prompts[j]).astype(bool)
+                        print("="*20 + "\nusing mask\n" + "="*20)
+                        poses.append(ests[j].register(K=reader.K, rgb=color, depth=depth, ob_mask=mask, iteration=args.est_refine_iter, init_rot_guess=args.init_rot_guess))
+                        out_of_frame[j] = False
+                        continue
+                if stopped_tracking[j]:
+                    poses.append(last_poses[j])
+                    continue
+                if out_of_frame[j]:
+                    poses.append(np.zeros_like(last_poses[j]))
+                    continue
                 if args.use_all_masks:
                     mask = reader.get_mask(i, dirname="_masks_" + args.prompts[j]).astype(bool)
                     print("="*20 + "\nusing mask\n" + "="*20)
@@ -128,6 +168,7 @@ def main():
                 else:
                     print("@"*20 + "\nno mask\n" + "@"*20)
                     poses.append(ests[j].track_one(rgb=color, depth=depth, K=reader.K, iteration=args.track_refine_iter))
+        last_poses = poses.copy()
         transforms = {}
         for j in range(len(ests)):
             os.makedirs(f'{output_dirs[j]}', exist_ok=True)
@@ -154,6 +195,8 @@ def main():
             if args.map_to_table_frame:
                 add_translation_text(vis, transforms, [(0, 50), (0, 100), (0, 150)], i)
             for j in range(len(ests)):
+                if out_of_frame[j]:
+                    continue
                 center_pose = poses[j]@np.linalg.inv(to_origin)
                 vis = draw_posed_3d_box(reader.K, img=vis, ob_in_cam=center_pose, bbox=bbox)
                 vis = draw_xyz_axis(vis, ob_in_cam=center_pose, scale=0.05, K=reader.K, thickness=2, transparency=0, is_input_rgb=True)
