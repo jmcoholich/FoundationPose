@@ -55,7 +55,8 @@ for i in "${!DEMO_DATASET_DIRS[@]}"; do
       --input_dir "$this_out/rgb" \
       --prompts "${PROMPTS[@]}" \
       --box_threshold "${BOX_THRESHOLDS[$i]}" \
-      --text_threshold "${TEXT_THRESHOLDS[$i]}"
+      --text_threshold "${TEXT_THRESHOLDS[$i]}" \
+      --annotation_dir "$subdir"
     # === ADDITION: Generate 3x3 tiled video ===
     echo "Creating 3x3 mask overlay video from outputs..."
 
