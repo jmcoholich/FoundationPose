@@ -136,7 +136,6 @@ def main():
         else:
             poses = []
             for j in range(len(ests)):
-                # if stop_tracking, continue to next iteration
                 img_key = f"{i}_{cam_name}"
                 obj_key = args.prompts[j].replace("_", " ")
                 if annotations_file is not None and img_key in annotations and obj_key in annotations[img_key]:

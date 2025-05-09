@@ -21,8 +21,8 @@ INPUT_H5 = os.path.join(ROOT_DIR, f"demo_{demo_num}.h5")
 OUTPUT_H5 = os.path.join(ROOT_DIR, f"demo_{demo_num}_annotations.h5")
 
 CAM_NAMES = ["front_cam", "overhead_cam", "side_cam"]
-OBJECT_LABELS = ["yellow plate", "orange plate", "teal plate"]
-BOX_COLORS = [(0, 0, 255), (255, 0, 0), (0, 255, 0)]  # R, B, G
+OBJECT_LABELS = ["Franka robot arm", "yellow plate", "orange plate", "teal plate"]
+BOX_COLORS = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 255, 0)]  # R, B, G
 
 with h5py.File(INPUT_H5, 'r') as h5f:
     rgb_group = h5f['rgb_frames']

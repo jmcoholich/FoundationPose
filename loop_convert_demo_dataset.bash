@@ -12,9 +12,9 @@ DEMO_DATASET_DIRS=($ROOT/stack_three_blocks $ROOT/stack_three_cups $ROOT/stack_t
 MESHS=(cube.obj cup.obj plate.obj)
 OUTPUT_SUFFIX=(for_FoundationPose_blocks for_FoundationPose_cups for_FoundationPose_plates)
 PROMPTS_LIST=(
-  "red cube;blue cube;green cube"
-  "orange cup;white cup that is NOT teal;teal cup"
-  "orange plate;yellow plate;teal plate"
+  "Franka robot arm;red cube;blue cube;green cube"
+  "Franka robot arm;orange cup;white cup that is NOT teal;teal cup"
+  "Franka robot arm;orange plate;yellow plate;teal plate"
 )
 BOX_THRESHOLDS=(0.3 0.3 0.05)
 TEXT_THRESHOLDS=(0.25 0.25 0.1)
@@ -67,14 +67,17 @@ for i in "${!DEMO_DATASET_DIRS[@]}"; do
 
     for i in $(find "${TILE_DIRS[0]}" -maxdepth 1 -type f -name '*_overlay.png' | sed 's/.*\///;s/_overlay\.png//' | sort); do
       convert \( ${TILE_DIRS[0]}/${i}_overlay.png \
-                  ${TILE_DIRS[1]}/${i}_overlay.png \
-                  ${TILE_DIRS[2]}/${i}_overlay.png +append \) \
-              \( ${TILE_DIRS[3]}/${i}_overlay.png \
-                  ${TILE_DIRS[4]}/${i}_overlay.png \
-                  ${TILE_DIRS[5]}/${i}_overlay.png +append \) \
-              \( ${TILE_DIRS[6]}/${i}_overlay.png \
-                  ${TILE_DIRS[7]}/${i}_overlay.png \
-                  ${TILE_DIRS[8]}/${i}_overlay.png +append \) \
+            ${TILE_DIRS[1]}/${i}_overlay.png \
+            ${TILE_DIRS[2]}/${i}_overlay.png \
+            ${TILE_DIRS[3]}/${i}_overlay.png +append \) \
+          \( ${TILE_DIRS[4]}/${i}_overlay.png \
+            ${TILE_DIRS[5]}/${i}_overlay.png \
+            ${TILE_DIRS[6]}/${i}_overlay.png \
+            ${TILE_DIRS[7]}/${i}_overlay.png +append \) \
+          \( ${TILE_DIRS[8]}/${i}_overlay.png \
+            ${TILE_DIRS[9]}/${i}_overlay.png \
+            ${TILE_DIRS[10]}/${i}_overlay.png \
+            ${TILE_DIRS[11]}/${i}_overlay.png +append \) \
               -append tiled_frames/${i}.png || break
 
       convert tiled_frames/${i}.png -resize 50% tiled_frames/${i}.png
