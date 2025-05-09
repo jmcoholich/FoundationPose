@@ -16,6 +16,7 @@ from scipy.spatial.transform import Rotation as R
 import os
 import numpy as np
 from Utils import to_homo
+import json
 
 CAM_TAG_DEFAULT_DETECTION = Detection()
 CAM_TAG_DEFAULT_DETECTION.tag_family = b'tagStandard41h12'
@@ -59,18 +60,18 @@ def main():
 
     args = parser.parse_args()
 
-    # load annotations pkl file (pkl file with "annotations" in the name in test_scene_dir)
+    # load annotations h5 file (h5 file with "annotations" in the name in test_scene_dir)
     annotations_file = None
     for f in os.listdir(args.test_scene_dir):
-        if "annotations" in f and f.endswith('.pkl'):
+        if "annotations" in f and f.endswith('.h5'):
             annotations_file = os.path.join(args.test_scene_dir, f)
             break
     cam_idxs = ["side_cam", "front_cam", "overhead_cam"]
     cam_name = cam_idxs[args.cam_number]
     if annotations_file is not None:
         # process annotations file, we only care about cam_number
-        with open(annotations_file, "rb") as f:
-            annotations = pickle.load(f)
+        with h5py.File(annotations_file, "r") as f:
+            annotations = {key: json.loads(f[key][()].decode('utf-8')) if isinstance(f[key][()], bytes) else f[key][()] for key in f.keys()}
 
     for i in range(len(args.prompts)):
         args.prompts[i] = args.prompts[i].replace(' ', '_')

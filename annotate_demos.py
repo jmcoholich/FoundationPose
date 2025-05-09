@@ -21,7 +21,13 @@ INPUT_H5 = os.path.join(ROOT_DIR, f"demo_{demo_num}.h5")
 OUTPUT_H5 = os.path.join(ROOT_DIR, f"demo_{demo_num}_annotations.h5")
 
 CAM_NAMES = ["front_cam", "overhead_cam", "side_cam"]
-OBJECT_LABELS = ["Franka robot arm", "yellow plate", "orange plate", "teal plate"]
+object_label_dict = {
+    "plates": ["Franka robot arm", "yellow plate", "orange plate", "teal plate"],
+    "cups": ["orange cup", "white cup that is NOT teal", "teal cup", "Franka robot arm"],
+    "blocks": ["red cube", "blue cube", "green cube", "Franka robot arm"],
+}
+
+OBJECT_LABELS = object_label_dict[thing]
 BOX_COLORS = [(0, 0, 255), (255, 0, 0), (0, 255, 0), (255, 255, 0)]  # R, B, G
 
 with h5py.File(INPUT_H5, 'r') as h5f:
@@ -119,6 +125,7 @@ while frame_idx < T:
                     object_annots[obj_label] = format_box(box)
                     out_of_frame_flags[key_tuple] = False
                     print("Box saved.")
+                    print(f"Box coordinates: {object_annots[obj_label]}")
                     break
                 elif key == ord('o'):
                     out_of_frame_flags[key_tuple] = True
@@ -143,8 +150,8 @@ while frame_idx < T:
                     sys.exit(0)
 
 
-
-        annotations[f"{frame_idx}_{cam}"] = object_annots
+        if object_annots:
+            annotations[f"{frame_idx}_{cam}"] = object_annots
 
     # After all 3 cameras are annotated
     prompt = (
@@ -172,7 +179,12 @@ while frame_idx < T:
 
 cv2.destroyAllWindows()
 # === Save Annotations ===
-with open(OUTPUT_H5.replace(".h5", ".pkl"), 'wb') as f:
-    pickle.dump(annotations, f)
+with h5py.File(OUTPUT_H5, 'a') as h5f:
+    for key, value in annotations.items():
+        if not value:
+            continue
+        if key in h5f:
+            del h5f[key]  # Remove existing dataset if it exists
+        h5f.create_dataset(key, data=json.dumps(value))  # Save annotations as JSON strings
 
-print(f"\n✅ Annotations saved to: {OUTPUT_H5.replace('.h5', '.pkl')}")
+print(f"\n✅ Annotations saved to: {OUTPUT_H5}")

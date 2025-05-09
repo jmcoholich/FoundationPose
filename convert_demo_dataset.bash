@@ -69,8 +69,8 @@ for subdir in "$DEMO_DATASET_DIR"/demonstration*; do
   --box_threshold "$BOX_THRESHOLD" \
   --text_threshold "$TEXT_THRESHOLD" \
 
-  # === ADDITION: Generate 3x3 tiled video ===
-  echo "Creating 3x3 mask overlay video from outputs..."
+  # === ADDITION: Generate 3x4 tiled video ===
+  echo "Creating 3x4 mask overlay video from outputs..."
 
   pushd "$this_out" > /dev/null
 

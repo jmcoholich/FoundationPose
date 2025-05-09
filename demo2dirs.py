@@ -41,19 +41,15 @@ def main():
 
     # Locate the single .pkl file
     pkl_files = [f for f in os.listdir(args.input_dir) if f.endswith('.pkl')]
-    # if len(pkl_files) != 1:
-    #     raise ValueError(f"Expected exactly one .pkl file in {args.input_dir}, found {len(pkl_files)}")
-    # pkl_demo_file = os.path.join(args.input_dir, pkl_files[0])
+    if len(pkl_files) != 1:
+        raise ValueError(f"Expected exactly one .pkl file in {args.input_dir}, found {len(pkl_files)}")
+    pkl_demo_file = os.path.join(args.input_dir, pkl_files[0])
     # pkl demo file should be the one without "annotations" in the name
-    pkl_demo_file = None
-    annotations_file = None
-    for f in pkl_files:
-        if "annotations" not in f:
-            pkl_demo_file = os.path.join(args.input_dir, f)
-        else:
+    annotations_file = None # should be the only h5 file in the input dir
+    for f in os.listdir(args.input_dir):
+        if f.endswith('.h5') and 'annotations' in f:
             annotations_file = os.path.join(args.input_dir, f)
-    if pkl_demo_file is None:
-        raise ValueError(f"No valid .pkl demo file found in {args.input_dir}")
+            break
     if annotations_file is not None:
         # copy it to the output dir
         shutil.copy(annotations_file, os.path.join(args.output_dir, os.path.basename(annotations_file)))
