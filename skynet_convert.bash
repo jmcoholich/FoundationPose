@@ -109,6 +109,9 @@ for i in "${!DEMO_DATASET_DIRS[@]}"; do
     DIR_BASENAME=$(basename "$DEMO_DATASET_DIR")
     # sync results back to my PC
     for attempt in {1..3}; do
+      # make sure the remote directory exists
+      ssh jcoholich@143.215.128.197 "mkdir -p /data3/fp_data/$DIR_BASENAME/${OUTPUT_SUFFIX[$i]}/"
+      # sync the output directory
       rsync -ahP $this_out jcoholich@143.215.128.197:/data3/fp_data/$DIR_BASENAME/${OUTPUT_SUFFIX[$i]}/
       sleep 5
     done
