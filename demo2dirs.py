@@ -29,7 +29,7 @@ def main():
     # )
     parser.add_argument(
         "--cam_K_matrix",
-        default="912.0 0.0 360.0\n0.0 912.0 360.0\n0.0 0.0 1\n",
+        default="912.0 0.0 640.0\n0.0 912.0 360.0\n0.0 0.0 1\n",
         help="Camera intrinsics matrix contents (will be written to cam_K.txt)"
     )
     parser.add_argument(
