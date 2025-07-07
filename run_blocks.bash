@@ -38,7 +38,7 @@ for subdir in "$INPUT_DIR"/*; do
         --init_rot_guess '[[1, 0, 0], [0, 1, 0], [0, 0, 1]]' \
         --use_all_masks \
         --cam_number $CAM_NUMBER \
-        $HEADLESS_ARG
+        --headless
 
     yes | ffmpeg -framerate 20 -i "$INPUT_DIR/$subdir_name/track_vis/%04d.png" \
          -c:v mpeg4 -q:v 1 -pix_fmt yuv420p "$INPUT_DIR/$subdir_name/${subdir_name}_vis.mp4"
